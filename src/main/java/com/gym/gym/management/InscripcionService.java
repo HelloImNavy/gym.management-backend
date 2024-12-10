@@ -20,8 +20,8 @@ public class InscripcionService {
     @Autowired
     private ActividadRepository actividadRepository;
 
-    // Registrar inscripción
-    public Inscripcion registrarInscripcion(Long idMiembro, Long idActividad, LocalDate fechaAlta) {
+
+    public Inscripcion registrarInscripciones(Long idMiembro, Long idActividad, LocalDate fechaAlta) {
         Miembro miembro = miembroRepository.findById(idMiembro).orElseThrow(() -> new IllegalArgumentException("Miembro no encontrado"));
         Actividad actividad = actividadRepository.findById(idActividad).orElseThrow(() -> new IllegalArgumentException("Actividad no encontrada"));
         
@@ -32,8 +32,8 @@ public class InscripcionService {
         
         return inscripcionRepository.save(inscripcion);
     }
-
-    // Baja una inscripción
+    
+    
     public Inscripcion darDeBaja(Long id, LocalDate fechaBaja) {
         return inscripcionRepository.findById(id).map(inscripcion -> {
             if (inscripcion.getFechaBaja() != null) {
@@ -53,7 +53,7 @@ public class InscripcionService {
     }
     
     public List<Inscripcion> obtenerTodasLasInscripciones() {
-        return inscripcionRepository.findAll();
+        return inscripcionRepository.obtenerInscripcionesConMiembro();
     }
     
     public Optional<Inscripcion> obtenerInscripcionPorId(Long id) {

@@ -49,6 +49,20 @@ public class ActividadController {
     public boolean verificarCupoDisponible(@PathVariable Long id) {
         return actividadService.puedeAgregarInscripcion(id);
     }
+    
+    @PutMapping("/{id}")
+    public Actividad actualizarActividad(@PathVariable Long id, @RequestBody Actividad actividad) {
+        Actividad actividadExistente = actividadService.obtenerActividadPorId(id);
+        if (actividadExistente != null) {
+      
+            actividadExistente.setNombre(actividad.getNombre());
+            actividadExistente.setCosto(actividad.getCosto());
+            actividadExistente.setCupo(actividad.getCupo());
+            
+            return actividadService.guardarActividad(actividadExistente);
+        }
+        return null; 
+    }
+
 
 }
-

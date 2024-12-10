@@ -11,6 +11,9 @@ public class MiembroService {
 
     @Autowired
     private MiembroRepository miembroRepository;
+    
+    @Autowired
+    private ActividadRepository actividadRepository;
 
     @Autowired
     private InscripcionRepository inscripcionRepository;
@@ -24,8 +27,34 @@ public class MiembroService {
     }
 
     public Miembro guardarMiembro(Miembro miembro) {
+        miembro.getInscripciones().forEach(inscripcion -> {
+            // Asocia las actividades y establece la fecha de alta
+            Long actividadId = inscripcion.getActividad().getId();
+            Actividad actividad = actividadRepository.findById(actividadId)
+                .orElseThrow(() -> new IllegalArgumentException("Actividad no encontrada con ID: " + actividadId));
+
+            // Verificar disponibilidad de cupo
+            if (!actividad.tieneCupoDisponible()) {
+                throw new IllegalStateException("La actividad '" + actividad.getNombre() + "' no tiene cupo disponible.");
+            }
+
+            // Incrementar cupo usado y asociar actividad a la inscripción
+            actividad.incrementarCupoUsado();
+            inscripcion.setActividad(actividad);
+
+            // Si no se establece una fecha, usa la fecha actual
+            if (inscripcion.getFechaAlta() == null) {
+                inscripcion.setFechaAlta(LocalDate.now());
+            }
+
+            // Guardar cambios en la actividad
+            actividadRepository.save(actividad);
+        });
+
+        // Guardar el miembro con sus inscripciones
         return miembroRepository.save(miembro);
     }
+
 
     public void eliminarMiembro(Long id) {
         miembroRepository.deleteById(id);

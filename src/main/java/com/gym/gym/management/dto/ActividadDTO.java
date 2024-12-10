@@ -8,20 +8,20 @@ import com.gym.gym.management.Inscripcion;
 public class ActividadDTO {
     private Long id;
     private String nombre;	
-    private String descripcion;
+
     private double costo;
     private int cupoUsado;
-    private int cupoTotal;
+    private int cupo;
     private List<Inscripcion> inscripciones; // Añadido para incluir las inscripciones
 
     public ActividadDTO(Actividad actividad) {
         this.id = actividad.getId();
         this.nombre = actividad.getNombre();
-        this.descripcion = actividad.getDescripcion();
+
         this.costo = actividad.getCosto();
         this.setInscripciones(actividad.getInscripciones());
         this.cupoUsado = actividad.obtenerNumeroInscripciones();
-        this.cupoTotal = actividad.getCupo();
+        this.cupo = actividad.getCupo();
     }
 
     // Getters y Setters
@@ -49,12 +49,12 @@ public class ActividadDTO {
         this.costo = costo;
     }
 
-    public int getCupoTotal() {
-        return cupoTotal;
+    public int getCupo() {
+        return cupo;
     }
 
-    public void setCupoTotal(int cupoTotal) {
-        this.cupoTotal = cupoTotal;
+    public void setCupo(int cupo) {
+        this.cupo = cupo;
     }
 
     public int getCupoUsado() {

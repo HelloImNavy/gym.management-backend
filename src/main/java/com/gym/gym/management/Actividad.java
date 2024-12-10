@@ -3,6 +3,8 @@ package com.gym.gym.management;
 import jakarta.persistence.*;
 import java.util.*;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
 @Table(name = "actividades")
 public class Actividad {
@@ -19,8 +21,13 @@ public class Actividad {
     @OneToMany(mappedBy = "actividad", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Horario> horarios = new ArrayList<>();
     
-    @OneToMany(mappedBy = "actividad")
-    private List<Inscripcion> inscripciones = new ArrayList<>(); // Inicializado
+    @OneToMany(mappedBy = "actividad", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("actividad-inscripcion")
+    private List<Inscripcion> inscripciones = new ArrayList<>();
+
+
+
+	private int cupoUsado;
 
     public boolean tieneCupoDisponible() {
         return inscripciones.size() < cupo;
@@ -32,6 +39,14 @@ public class Actividad {
 
     public int obtenerNumeroInscripciones() {
         return inscripciones.size();
+    }
+    
+    public void incrementarCupoUsado() {
+        if (tieneCupoDisponible()) {
+            this.setCupoUsado(this.getCupoUsado() + 1);
+        } else {
+            throw new IllegalStateException("No hay cupo disponible para esta actividad.");
+        }
     }
 
     // Constructor vacío
@@ -94,4 +109,12 @@ public class Actividad {
     public void setInscripciones(List<Inscripcion> inscripciones) {
         this.inscripciones = inscripciones;
     }
+
+	public int getCupoUsado() {
+		return cupoUsado;
+	}
+
+	public void setCupoUsado(int cupoUsado) {
+		this.cupoUsado = cupoUsado;
+	}
 }

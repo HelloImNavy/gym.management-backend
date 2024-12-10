@@ -2,7 +2,10 @@ package com.gym.gym.management;
 
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -33,8 +36,10 @@ public class Miembro {
 
     private String observaciones;
 
-    @OneToMany(mappedBy = "miembro", cascade = CascadeType.ALL)
-    private List<Inscripcion> inscripciones;
+    @OneToMany(mappedBy = "miembro", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("miembro-inscripcion")
+    private List<Inscripcion> inscripciones = new ArrayList<>();
+
 
     @OneToMany(mappedBy = "miembro", cascade = CascadeType.ALL)
     private List<Pago> pagos;
