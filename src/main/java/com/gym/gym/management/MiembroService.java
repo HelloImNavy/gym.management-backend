@@ -2,9 +2,14 @@ package com.gym.gym.management;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class MiembroService {
@@ -74,4 +79,26 @@ public class MiembroService {
         }
         return null;
     }
+    
+
+    public Page<Miembro> obtenerMiembrosPorActividad(Long actividadId, String query, Pageable pageable) {
+        Page<Inscripcion> inscripciones;
+
+        // Si no hay filtro, traemos todas las inscripciones de la actividad
+        if (query == null || query.isEmpty()) {
+            inscripciones = inscripcionRepository.findByActividadId(actividadId, pageable);
+        } else {
+            // Si hay filtro, buscamos por nombre o apellido
+            inscripciones = inscripcionRepository.buscarInscripcionesPorActividadYMiembro(actividadId, query, pageable);
+        }
+
+        // Convertir las inscripciones a una lista de miembros
+        List<Miembro> miembros = inscripciones.stream()
+                .map(Inscripcion::getMiembro)  // Obtener el miembro de cada inscripción
+                .collect(Collectors.toList());
+
+        // Retornar los miembros como una página
+        return new PageImpl<>(miembros, pageable, inscripciones.getTotalElements());
+    }
+
 }

@@ -57,8 +57,8 @@ public class PagoController {
      * @param nombreSocio Parte del nombre del socio (opcional).
      * @return Lista de socios encontrados.
      */
-    @GetMapping("/buscarSocios")
-    public List<Miembro> buscarSocios(@RequestParam(required = false) String nombreSocio) {
-        return pagoService.buscarSociosPorNombre(nombreSocio);
-    }
+    //@GetMapping("/buscarSocios")
+   // public List<Miembro> buscarSocios(@RequestParam(required = false) String nombreSocio) {
+   //     return pagoService.buscarSociosPorNombre(nombreSocio);
+    //}
 }

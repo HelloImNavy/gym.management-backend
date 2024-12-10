@@ -6,25 +6,26 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-
+import org.springframework.data.repository.query.Param;
 
 public interface InscripcionRepository extends JpaRepository<Inscripcion, Long> {
 
-    // Buscar inscripciones por miembro
-    Inscripcion findByMiembro(Miembro miembro);
-    
-    // Buscar inscripciones por ID de miembro
-    List<Inscripcion> findByMiembroId(Long idMiembro);
+	// Buscar inscripciones por miembro
+	Inscripcion findByMiembro(Miembro miembro);
 
-    // Método para obtener inscripciones solo por actividadId con paginación
-    Page<Inscripcion> findByActividadId(Long actividadId, Pageable pageable);
+	// Buscar inscripciones por ID de miembro
+	List<Inscripcion> findByMiembroId(Long idMiembro);
 
-    // Método con consulta personalizada usando JPQL
-    @Query("SELECT i FROM Inscripcion i JOIN i.miembro m JOIN i.actividad a")
-    List<Inscripcion> obtenerInscripcionesConMiembro();
-    
- // Método para obtener inscripciones por actividadId y buscar por nombre o apellido
-    Page<Inscripcion> findByActividadIdAndMiembroNombreContainingOrMiembroApellidosContaining(Long actividadId, String nombre, String apellidos, Pageable pageable);
+	// Método para obtener inscripciones solo por actividadId con paginación
+	Page<Inscripcion> findByActividadId(Long actividadId, Pageable pageable);
+
+	// Método con consulta personalizada usando JPQL
+	@Query("SELECT i FROM Inscripcion i JOIN i.miembro m JOIN i.actividad a")
+	List<Inscripcion> obtenerInscripcionesConMiembro();
+
+	@Query("SELECT i FROM Inscripcion i JOIN i.miembro m WHERE i.actividad.id = :actividadId " +
+		       "AND (m.nombre LIKE %:query% OR m.apellidos LIKE %:query%)")
+		Page<Inscripcion> buscarInscripcionesPorActividadYMiembro(@Param("actividadId") Long actividadId, @Param("query") String query, Pageable pageable);
 
 
 }

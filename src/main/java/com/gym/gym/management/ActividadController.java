@@ -14,6 +14,7 @@ public class ActividadController {
 
     @Autowired
     private ActividadService actividadService;
+    
 
     // Método para obtener todas las actividades, ahora devolviendo el DTO
     @GetMapping
@@ -63,6 +64,6 @@ public class ActividadController {
         }
         return null; 
     }
-
+    
 
 }

@@ -25,8 +25,6 @@ public class Actividad {
     @JsonManagedReference("actividad-inscripcion")
     private List<Inscripcion> inscripciones = new ArrayList<>();
 
-
-
 	private int cupoUsado;
 
     public boolean tieneCupoDisponible() {

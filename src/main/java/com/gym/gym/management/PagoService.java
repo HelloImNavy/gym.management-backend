@@ -65,10 +65,10 @@ public class PagoService {
      * @param nombreSocio Parte del nombre o apellidos del socio.
      * @return Lista de socios encontrados.
      */
-    public List<Miembro> buscarSociosPorNombre(String nombreSocio) {
-        if (nombreSocio == null || nombreSocio.trim().isEmpty()) {
-            return miembroRepository.findAll(); // Si no se proporciona un nombre, devuelve todos los socios
-        }
-        return miembroRepository.findByNombreContainingIgnoreCaseOrApellidosContainingIgnoreCase(nombreSocio, nombreSocio);
-    }
+    //public List<Miembro> buscarSociosPorNombre(String nombreSocio) {
+      //  if (nombreSocio == null || nombreSocio.trim().isEmpty()) {
+        //    return miembroRepository.findAll(); // Si no se proporciona un nombre, devuelve todos los socios
+        //}
+        //return miembroRepository.findByNombreContainingIgnoreCaseOrApellidosContainingIgnoreCase(nombreSocio, nombreSocio);
+   // }
 }

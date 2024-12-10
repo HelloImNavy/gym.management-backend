@@ -1,6 +1,8 @@
 package com.gym.gym.management;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -52,4 +54,14 @@ public class MiembroController {
         miembroService.eliminarMiembro(id);
         return ResponseEntity.ok("Miembro eliminado correctamente");
     }
+    
+    @GetMapping("/actividad/{actividadId}")
+    public ResponseEntity<Page<Miembro>> obtenerMiembrosDeActividad(
+            @PathVariable Long actividadId,
+            @RequestParam(required = false) String query,
+            Pageable pageable) {
+        Page<Miembro> miembros = miembroService.obtenerMiembrosPorActividad(actividadId, query, pageable);
+        return ResponseEntity.ok(miembros);
+    }
+
 }
