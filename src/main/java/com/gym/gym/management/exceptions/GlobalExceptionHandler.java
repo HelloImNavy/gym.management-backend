@@ -20,4 +20,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleGeneralException(Exception ex, WebRequest request) {
         return new ResponseEntity<>("Error interno en el servidor.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
+    
+    @ExceptionHandler(CobroNotFoundException.class)
+    public ResponseEntity<String> handleCobroNotFound(CobroNotFoundException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
 }

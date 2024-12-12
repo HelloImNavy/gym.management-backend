@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
@@ -39,10 +40,11 @@ public class Miembro {
     @OneToMany(mappedBy = "miembro", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("miembro-inscripcion")
     private List<Inscripcion> inscripciones = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "miembro", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("miembro-cobro")
+    private List<Cobro> cobros = new ArrayList<>();
 
-
-    @OneToMany(mappedBy = "miembro", cascade = CascadeType.ALL)
-    private List<Pago> pagos;
 
     public Miembro() {}
 
@@ -111,13 +113,6 @@ public class Miembro {
         this.inscripciones = inscripciones;
     }
 
-    public List<Pago> getPagos() {
-        return pagos;
-    }
-
-    public void setPagos(List<Pago> pagos) {
-        this.pagos = pagos;
-    }
 
     public Date getFechaAlta() {
         return fechaAlta;
@@ -126,4 +121,19 @@ public class Miembro {
     public void setFechaAlta(Date fechaAlta) {
         this.fechaAlta = fechaAlta;
     }
-}
+    
+    public List<Cobro> getCobros() {
+        return cobros;
+    }
+
+    public void setCobros(List<Cobro> cobros) {
+        this.cobros = cobros;
+    }
+    
+    public List<Actividad> getActividades() {
+        return inscripciones.stream()
+            .map(Inscripcion::getActividad) 
+            .collect(Collectors.toList());  
+    }
+    }
+    
