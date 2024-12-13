@@ -32,6 +32,16 @@ public class MiembroController {
             return ResponseEntity.notFound().build();
         }
     }
+    
+    @PutMapping("/{id}") 
+    public ResponseEntity<Miembro> actualizarMiembro(@PathVariable Long id, @RequestBody Miembro miembro) { 
+    	Miembro miembroActualizado = miembroService.actualizarMiembro(id, miembro); 
+    	if (miembroActualizado != null) { 
+    		return ResponseEntity.ok(miembroActualizado); 
+    	} else { 
+    		return ResponseEntity.notFound().build(); 
+    	} 
+    }
 
     @PostMapping
     public ResponseEntity<Miembro> registrarMiembro(@RequestBody Miembro miembro) {
