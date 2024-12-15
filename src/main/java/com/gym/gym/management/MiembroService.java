@@ -1,11 +1,12 @@
 package com.gym.gym.management;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-
 
 import java.time.LocalDate;
 import java.util.List;
@@ -14,14 +15,22 @@ import java.util.stream.Collectors;
 @Service
 public class MiembroService {
 
+    private static final Logger logger = LoggerFactory.getLogger(MiembroService.class);
+
     @Autowired
     private MiembroRepository miembroRepository;
-    
+
     @Autowired
     private ActividadRepository actividadRepository;
 
     @Autowired
     private InscripcionRepository inscripcionRepository;
+
+    @Autowired
+    private CobroRepository cobroRepository;
+
+    @Autowired
+    private HistorialAltasBajasRepository historialRepository;
 
     public List<Miembro> obtenerTodosLosMiembros() {
         return miembroRepository.findAll();
@@ -32,40 +41,78 @@ public class MiembroService {
     }
 
     public Miembro guardarMiembro(Miembro miembro) {
+        // Guardar las inscripciones primero
         miembro.getInscripciones().forEach(inscripcion -> {
-            // Asocia las actividades y establece la fecha de alta
             Long actividadId = inscripcion.getActividad().getId();
             Actividad actividad = actividadRepository.findById(actividadId)
                 .orElseThrow(() -> new IllegalArgumentException("Actividad no encontrada con ID: " + actividadId));
 
-            // Verificar disponibilidad de cupo
             if (!actividad.tieneCupoDisponible()) {
                 throw new IllegalStateException("La actividad '" + actividad.getNombre() + "' no tiene cupo disponible.");
             }
 
-            // Incrementar cupo usado y asociar actividad a la inscripción
             actividad.incrementarCupoUsado();
             inscripcion.setActividad(actividad);
 
-            // Si no se establece una fecha, usa la fecha actual
             if (inscripcion.getFechaAlta() == null) {
                 inscripcion.setFechaAlta(LocalDate.now());
             }
 
-            // Guardar cambios en la actividad
             actividadRepository.save(actividad);
+            logger.debug("Actividad actualizada: " + actividad.getId());
         });
 
-        // Guardar el miembro con sus inscripciones
-        return miembroRepository.save(miembro);
+        // Guardar el miembro en la base de datos
+        Miembro nuevoMiembro = miembroRepository.save(miembro);
+        logger.debug("Nuevo miembro guardado: " + nuevoMiembro.getId());
+
+        // Guardar inscripciones después de guardar el miembro
+        miembro.getInscripciones().forEach(inscripcion -> {
+            inscripcion.setMiembro(nuevoMiembro);
+            inscripcionRepository.save(inscripcion);
+            logger.debug("Inscripción guardada: " + inscripcion.getId());
+        });
+
+        // Crear registro en el historial de altas
+        HistorialAltasBajas alta = new HistorialAltasBajas();
+        alta.setFechaAlta(LocalDate.now());
+        alta.setMiembro(nuevoMiembro);
+        historialRepository.save(alta);
+
+        // Crear cobros iniciales basados en las inscripciones
+        crearCobrosIniciales(nuevoMiembro);
+
+        return nuevoMiembro;
+    }
+
+    private void crearCobrosIniciales(Miembro miembro) {
+        miembro.getInscripciones().forEach(inscripcion -> {
+            Cobro cobro = new Cobro();
+            cobro.setMiembro(miembro);
+            cobro.setInscripcion(inscripcion);
+            cobro.setFecha(LocalDate.now());
+            cobro.setMonto(inscripcion.getActividad().getCosto());
+            cobro.setEstado("PENDIENTE");
+            cobro.setConcepto("Cuota de Actividad: " + inscripcion.getActividad().getNombre());
+            Cobro cobroGuardado = cobroRepository.save(cobro);
+            logger.debug("Cobro guardado: " + cobroGuardado.getId() + ", para miembro: " + miembro.getId());
+        });
     }
 
 
     public void eliminarMiembro(Long id) {
+        List<HistorialAltasBajas> historial = historialRepository.findByMiembroId(id);
+        historialRepository.deleteAll(historial);
+
+        List<Inscripcion> inscripciones = inscripcionRepository.findByMiembroId(id);
+        inscripcionRepository.deleteAll(inscripciones);
+
+        List<Cobro> cobros = cobroRepository.buscarPorMiembroId(id);
+        cobroRepository.deleteAll(cobros);
+
         miembroRepository.deleteById(id);
     }
 
-    // Agregar métodos para trabajar con inscripciones si es necesario
     public List<Inscripcion> obtenerInscripcionesDeMiembro(Long miembroId) {
         return inscripcionRepository.findByMiembroId(miembroId);
     }
@@ -79,26 +126,50 @@ public class MiembroService {
         }
         return null;
     }
-    
+
+    public Miembro actualizarMiembro(Long id, Miembro miembroActualizado) {
+        Miembro miembro = miembroRepository.findById(id).orElse(null);
+        if (miembro != null) {
+            miembro.setNombre(miembroActualizado.getNombre());
+            miembro.setApellidos(miembroActualizado.getApellidos());
+            miembro.setDireccion(miembroActualizado.getDireccion());
+            miembro.setFechaNacimiento(miembroActualizado.getFechaNacimiento());
+            miembro.setTelefono(miembroActualizado.getTelefono());
+            miembro.setObservaciones(miembroActualizado.getObservaciones());
+            return miembroRepository.save(miembro);
+        }
+        return null;
+    }
 
     public Page<Miembro> obtenerMiembrosPorActividad(Long actividadId, String query, Pageable pageable) {
         Page<Inscripcion> inscripciones;
 
-        // Si no hay filtro, traemos todas las inscripciones de la actividad
         if (query == null || query.isEmpty()) {
             inscripciones = inscripcionRepository.findByActividadId(actividadId, pageable);
         } else {
-            // Si hay filtro, buscamos por nombre o apellido
             inscripciones = inscripcionRepository.buscarInscripcionesPorActividadYMiembro(actividadId, query, pageable);
         }
-
-        // Convertir las inscripciones a una lista de miembros
         List<Miembro> miembros = inscripciones.stream()
-                .map(Inscripcion::getMiembro)  // Obtener el miembro de cada inscripción
+                .map(Inscripcion::getMiembro)
                 .collect(Collectors.toList());
-
-        // Retornar los miembros como una página
         return new PageImpl<>(miembros, pageable, inscripciones.getTotalElements());
     }
 
+    public Miembro darDeBajaActividad(Long miembroId, Long actividadId) {
+        Miembro miembro = miembroRepository.findById(miembroId).orElse(null);
+        if (miembro != null) {
+            Inscripcion inscripcion = inscripcionRepository.findByMiembroIdAndActividadId(miembroId, actividadId);
+            if (inscripcion != null) {
+                inscripcion.setFechaBaja(LocalDate.now());
+                inscripcionRepository.save(inscripcion);
+                if (inscripcionRepository.countByMiembroIdAndFechaBajaIsNull(miembroId) == 0) {
+                    HistorialAltasBajas baja = new HistorialAltasBajas();
+                    baja.setFechaBaja(LocalDate.now());
+                    baja.setMiembro(miembro);
+                    historialRepository.save(baja);
+                }
+            }
+        }
+        return miembro;
+    }
 }

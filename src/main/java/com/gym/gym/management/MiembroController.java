@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
-
 @RestController
 @RequestMapping("/miembros")
 public class MiembroController {
@@ -32,15 +31,15 @@ public class MiembroController {
             return ResponseEntity.notFound().build();
         }
     }
-    
-    @PutMapping("/{id}") 
-    public ResponseEntity<Miembro> actualizarMiembro(@PathVariable Long id, @RequestBody Miembro miembro) { 
-    	Miembro miembroActualizado = miembroService.actualizarMiembro(id, miembro); 
-    	if (miembroActualizado != null) { 
-    		return ResponseEntity.ok(miembroActualizado); 
-    	} else { 
-    		return ResponseEntity.notFound().build(); 
-    	} 
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Miembro> actualizarMiembro(@PathVariable Long id, @RequestBody Miembro miembro) {
+        Miembro miembroActualizado = miembroService.actualizarMiembro(id, miembro);
+        if (miembroActualizado != null) {
+            return ResponseEntity.ok(miembroActualizado);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping
@@ -64,7 +63,7 @@ public class MiembroController {
         miembroService.eliminarMiembro(id);
         return ResponseEntity.ok("Miembro eliminado correctamente");
     }
-    
+
     @GetMapping("/actividad/{actividadId}")
     public ResponseEntity<Page<Miembro>> obtenerMiembrosDeActividad(
             @PathVariable Long actividadId,
@@ -73,5 +72,4 @@ public class MiembroController {
         Page<Miembro> miembros = miembroService.obtenerMiembrosPorActividad(actividadId, query, pageable);
         return ResponseEntity.ok(miembros);
     }
-
 }

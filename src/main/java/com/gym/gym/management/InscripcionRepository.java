@@ -14,7 +14,8 @@ public interface InscripcionRepository extends JpaRepository<Inscripcion, Long> 
 	Inscripcion findByMiembro(Miembro miembro);
 
 	// Buscar inscripciones por ID de miembro
-	List<Inscripcion> findByMiembroId(Long idMiembro);
+
+    //	List<Inscripcion> findByMiembroId(Long idMiembro);
 
 	// Método para obtener inscripciones solo por actividadId con paginación
 	Page<Inscripcion> findByActividadId(Long actividadId, Pageable pageable);
@@ -27,5 +28,10 @@ public interface InscripcionRepository extends JpaRepository<Inscripcion, Long> 
 		       "AND (m.nombre LIKE %:query% OR m.apellidos LIKE %:query%)")
 		Page<Inscripcion> buscarInscripcionesPorActividadYMiembro(@Param("actividadId") Long actividadId, @Param("query") String query, Pageable pageable);
 
+	List<Inscripcion> findByMiembroId(Long miembroId);
+	    long countByMiembroIdAndFechaBajaIsNull(Long miembroId);
+	    Inscripcion findByMiembroIdAndActividadId(Long miembroId, Long actividadId);
+	}
 
-}
+
+

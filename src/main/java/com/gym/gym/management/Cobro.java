@@ -10,32 +10,30 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(name = "cobro")
 public class Cobro {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
+    @ManyToOne
+    @JoinColumn(name = "miembro_id", nullable = false)
+    @JsonBackReference("miembro-cobro")
+    private Miembro miembro;
+
     @ManyToOne
     @JoinColumn(name = "inscripcion_id", nullable = true)
     @JsonBackReference("inscripcion-cobro")
     private Inscripcion inscripcion;
 
-    @ManyToOne
-    @JoinColumn(name = "miembros_id", nullable = false)
-    @JsonBackReference("miembro-cobro")
-    private Miembro miembro;
-
     private String concepto;
-
     private LocalDate fecha;
-
     private String estado; 
-
     private LocalDate fechaPago;
-    
     private Double monto;
 
     // Getters y Setters
@@ -86,7 +84,7 @@ public class Cobro {
     public void setFechaPago(LocalDate fechaPago) {
         this.fechaPago = fechaPago;
     }
-    
+
     public Inscripcion getInscripcion() {
         return inscripcion;
     }
@@ -95,12 +93,11 @@ public class Cobro {
         this.inscripcion = inscripcion;
     }
 
-	public Double getMonto() {
-		return monto;
-	}
+    public Double getMonto() {
+        return monto;
+    }
 
-	public void setMonto(Double monto) {
-		this.monto = monto;
-	}
-
+    public void setMonto(Double monto) {
+        this.monto = monto;
+    }
 }

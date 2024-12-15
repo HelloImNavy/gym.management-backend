@@ -135,5 +135,7 @@ public class Miembro {
             .map(Inscripcion::getActividad) 
             .collect(Collectors.toList());  
     }
+
+
     }
     
