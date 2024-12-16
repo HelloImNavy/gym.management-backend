@@ -2,9 +2,13 @@ package com.gym.gym.management;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import com.gym.gym.management.dto.CobroDTO;
 import com.gym.gym.management.exceptions.CobroNotFoundException;
 
 @Service
@@ -100,7 +104,7 @@ public class CobroService {
                 .orElseThrow(() -> new RuntimeException("Inscripción no encontrada"));
 
         Cobro cobro = new Cobro();
-        cobro.setInscripcion(inscripcion);	
+        cobro.setInscripcion(inscripcion);  
         cobro.setConcepto(concepto);
         cobro.setMonto(monto);
         cobro.setFecha(LocalDate.now());
@@ -108,4 +112,36 @@ public class CobroService {
         return cobroRepository.save(cobro);
     }
 
+    public List<CobroDTO> obtenerTodosLosCobros() {
+        List<Cobro> cobros = cobroRepository.findAll();
+        return cobros.stream().map(this::convertirACobroDTO).collect(Collectors.toList());
+    }
+
+    public CobroDTO actualizarCobro(Long id, CobroDTO cobroDTO) {
+        Cobro cobro = cobroRepository.findById(id)
+                .orElseThrow(() -> new CobroNotFoundException("El cobro especificado no existe."));
+        cobro.setConcepto(cobroDTO.getConcepto());
+        cobro.setFecha(cobroDTO.getFecha());
+        cobro.setEstado(cobroDTO.getEstado());
+        cobro.setFechaPago(cobroDTO.getFechaPago());
+        cobro.setMonto(cobroDTO.getMonto());
+        cobroRepository.save(cobro);
+        return convertirACobroDTO(cobro);
+    }
+
+    private CobroDTO convertirACobroDTO(Cobro cobro) {
+        CobroDTO dto = new CobroDTO();
+        dto.setId(cobro.getId());
+        dto.setConcepto(cobro.getConcepto());
+        dto.setFecha(cobro.getFecha());
+        dto.setEstado(cobro.getEstado());
+        dto.setFechaPago(cobro.getFechaPago());
+        dto.setMonto(cobro.getMonto());
+        if (cobro.getMiembro() != null) {
+            dto.setMiembroId(cobro.getMiembro().getId());
+            dto.setMiembroNombre(cobro.getMiembro().getNombre());
+            dto.setMiembroApellidos(cobro.getMiembro().getApellidos());
+        }
+        return dto;
+    }
 }

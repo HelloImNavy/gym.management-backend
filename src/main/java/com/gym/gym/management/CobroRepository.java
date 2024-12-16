@@ -9,21 +9,19 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CobroRepository extends JpaRepository<Cobro, Long> {
 
-    @Query("SELECT c FROM Cobro c WHERE c.miembro.nombre LIKE %:nombre% OR c.miembro.apellidos LIKE %:apellidos%")
+    @Query("SELECT c FROM Cobro c JOIN FETCH c.miembro WHERE c.miembro.nombre LIKE %:nombre% OR c.miembro.apellidos LIKE %:apellidos%")
     List<Cobro> buscarPorMiembro(@Param("nombre") String nombre, @Param("apellidos") String apellidos);
 
-    @Query("SELECT c FROM Cobro c WHERE c.miembro.id = :id")
+    @Query("SELECT c FROM Cobro c JOIN FETCH c.miembro WHERE c.miembro.id = :id")
     List<Cobro> buscarPorMiembroId(@Param("id") Long id);
 
-    List<Cobro> findByFechaPagoIsNull();
-
-    @Query("SELECT c FROM Cobro c WHERE c.miembro.id = :miembroId AND c.estado = :estado")
+    @Query("SELECT c FROM Cobro c JOIN FETCH c.miembro WHERE c.miembro.id = :miembroId AND c.estado = :estado")
     List<Cobro> findByMiembroIdAndEstado(@Param("miembroId") Long miembroId, @Param("estado") String estado);
 
-    @Query("SELECT COUNT(c) > 0 FROM Cobro c WHERE c.inscripcion.id = :inscripcionId AND c.estado = 'PENDIENTE'")
+    @Query("SELECT c FROM Cobro c JOIN FETCH c.miembro WHERE c.inscripcion.id = :inscripcionId AND c.estado = 'PENDIENTE'")
     boolean existeCobroPendiente(@Param("inscripcionId") Long inscripcionId);
 
-    @Query("SELECT c FROM Cobro c WHERE "
+    @Query("SELECT c FROM Cobro c JOIN FETCH c.miembro WHERE "
             + "(:nombre IS NULL OR c.miembro.nombre LIKE %:nombre%) "
             + "AND (:apellidos IS NULL OR c.miembro.apellidos LIKE %:apellidos%) "
             + "AND (:fechaInicio IS NULL OR c.fecha >= :fechaInicio) "
@@ -32,4 +30,9 @@ public interface CobroRepository extends JpaRepository<Cobro, Long> {
     List<Cobro> buscarConFiltros(@Param("nombre") String nombre, @Param("apellidos") String apellidos,
                                  @Param("fechaInicio") String fechaInicio, @Param("fechaFin") String fechaFin,
                                  @Param("estado") String estado);
+
+    @Query("SELECT c FROM Cobro c JOIN FETCH c.miembro")
+    List<Cobro> findAll();
+    
+    List<Cobro> findByFechaPagoIsNull();
 }

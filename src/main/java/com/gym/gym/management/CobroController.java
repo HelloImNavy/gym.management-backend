@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
+import com.gym.gym.management.dto.CobroDTO;
 
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -19,12 +19,6 @@ public class CobroController {
 
     @Autowired
     private CobroRepository cobroRepository;
-
-    @GetMapping
-    public ResponseEntity<List<Cobro>> obtenerTodosLosCobros() {
-        List<Cobro> cobros = cobroRepository.findAll();
-        return ResponseEntity.ok(cobros);
-    }
 
     @GetMapping("/miembro")
     public ResponseEntity<List<Cobro>> buscarCobrosPorMiembro(
@@ -60,6 +54,12 @@ public class CobroController {
         return new ResponseEntity<>("Cobro marcado como pagado", HttpStatus.OK);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<CobroDTO> actualizarCobro(@PathVariable Long id, @RequestBody CobroDTO cobroDTO) {
+        CobroDTO actualizado = cobroService.actualizarCobro(id, cobroDTO);
+        return ResponseEntity.ok(actualizado);
+    }
+
     @GetMapping("/pendientes")
     public ResponseEntity<List<Cobro>> getCobrosPendientes() {
         List<Cobro> pendientes = cobroService.obtenerCobrosPendientes();
@@ -70,5 +70,9 @@ public class CobroController {
     public ResponseEntity<Cobro> crearCobro(@RequestParam Long miembroId, @RequestParam(required = false) Long inscripcionId, @RequestParam String concepto, @RequestParam double monto) {
         Cobro nuevoCobro = cobroService.crearCobro(miembroId, inscripcionId, concepto, monto);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoCobro);
+    }
+    
+    @GetMapping public ResponseEntity<List<CobroDTO>> obtenerTodosLosCobros() { 
+        List<CobroDTO> cobros = cobroService.obtenerTodosLosCobros(); return ResponseEntity.ok(cobros); 
     }
 }

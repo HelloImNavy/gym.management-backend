@@ -42,7 +42,7 @@ public class Miembro {
     private List<Inscripcion> inscripciones = new ArrayList<>();
     
     @OneToMany(mappedBy = "miembro", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference("miembro-cobro")
+    @JsonManagedReference("miembro-cobro")    
     private List<Cobro> cobros = new ArrayList<>();
 
 
