@@ -34,6 +34,7 @@ public class Miembro {
 
     
     private Date fechaAlta;
+    private LocalDate fechaBaja;
 
     private String observaciones;
 
@@ -135,6 +136,14 @@ public class Miembro {
             .map(Inscripcion::getActividad) 
             .collect(Collectors.toList());  
     }
+
+	public LocalDate getFechaBaja() {
+		return fechaBaja;
+	}
+
+	public void setFechaBaja(LocalDate fechaBaja) {
+		this.fechaBaja = fechaBaja;
+	}
 
 
     }

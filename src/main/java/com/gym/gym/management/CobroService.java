@@ -144,4 +144,15 @@ public class CobroService {
         }
         return dto;
     }
+
+    public List<CobroDTO> buscarCobrosPorMiembro(Long miembroId) {
+        List<Cobro> cobros = cobroRepository.buscarPorMiembroId(miembroId);
+        return cobros.stream().map(this::convertirACobroDTO).collect(Collectors.toList());
+    }
+    
+    public boolean verificarTodosPagados(Long miembroId) {
+        List<Cobro> cobros = cobroRepository.buscarPorMiembroId(miembroId); 
+        return cobros.stream().allMatch(cobro -> cobro.getEstado().equals("pagado")); 
+    }
+
 }

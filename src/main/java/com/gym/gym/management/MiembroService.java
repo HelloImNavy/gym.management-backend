@@ -30,7 +30,7 @@ public class MiembroService {
     private CobroRepository cobroRepository;
 
     @Autowired
-    private HistorialAltasBajasRepository historialRepository;
+    private HistorialAltasRepository historialRepository;
 
     public List<Miembro> obtenerTodosLosMiembros() {
         return miembroRepository.findAll();
@@ -41,7 +41,17 @@ public class MiembroService {
     }
 
     public Miembro guardarMiembro(Miembro miembro) {
-        // Guardar las inscripciones primero
+        Miembro nuevoMiembro = miembroRepository.save(miembro);
+        logger.debug("Nuevo miembro guardado: " + nuevoMiembro.getId());
+
+        // Crear registro en el historial de altas
+        HistorialAltas alta = new HistorialAltas();
+        alta.setFechaAlta(LocalDate.now());
+        alta.setMiembro(nuevoMiembro);
+        historialRepository.save(alta);
+        logger.debug("Historial de alta creado para el miembro: " + nuevoMiembro.getId());
+
+        // Guardar las inscripciones
         miembro.getInscripciones().forEach(inscripcion -> {
             Long actividadId = inscripcion.getActividad().getId();
             Actividad actividad = actividadRepository.findById(actividadId)
@@ -53,31 +63,12 @@ public class MiembroService {
 
             actividad.incrementarCupoUsado();
             inscripcion.setActividad(actividad);
-
-            if (inscripcion.getFechaAlta() == null) {
-                inscripcion.setFechaAlta(LocalDate.now());
-            }
+            inscripcion.setMiembro(nuevoMiembro);
 
             actividadRepository.save(actividad);
-            logger.debug("Actividad actualizada: " + actividad.getId());
-        });
-
-        // Guardar el miembro en la base de datos
-        Miembro nuevoMiembro = miembroRepository.save(miembro);
-        logger.debug("Nuevo miembro guardado: " + nuevoMiembro.getId());
-
-        // Guardar inscripciones después de guardar el miembro
-        miembro.getInscripciones().forEach(inscripcion -> {
-            inscripcion.setMiembro(nuevoMiembro);
             inscripcionRepository.save(inscripcion);
             logger.debug("Inscripción guardada: " + inscripcion.getId());
         });
-
-        // Crear registro en el historial de altas
-        HistorialAltasBajas alta = new HistorialAltasBajas();
-        alta.setFechaAlta(LocalDate.now());
-        alta.setMiembro(nuevoMiembro);
-        historialRepository.save(alta);
 
         // Crear cobros iniciales basados en las inscripciones
         crearCobrosIniciales(nuevoMiembro);
@@ -99,9 +90,8 @@ public class MiembroService {
         });
     }
 
-
     public void eliminarMiembro(Long id) {
-        List<HistorialAltasBajas> historial = historialRepository.findByMiembroId(id);
+        List<HistorialAltas> historial = historialRepository.findByMiembroId(id);
         historialRepository.deleteAll(historial);
 
         List<Inscripcion> inscripciones = inscripcionRepository.findByMiembroId(id);
@@ -117,15 +107,7 @@ public class MiembroService {
         return inscripcionRepository.findByMiembroId(miembroId);
     }
 
-    public Miembro darDeBajaMiembro(Long miembroId, Long idInscripcion, LocalDate fechaBaja) {
-        Inscripcion inscripcion = inscripcionRepository.findById(idInscripcion).orElse(null);
-        if (inscripcion != null && inscripcion.getMiembro().getId().equals(miembroId)) {
-            inscripcion.setFechaBaja(fechaBaja);
-            inscripcionRepository.save(inscripcion);
-            return miembroRepository.findById(miembroId).orElse(null);
-        }
-        return null;
-    }
+
 
     public Miembro actualizarMiembro(Long id, Miembro miembroActualizado) {
         Miembro miembro = miembroRepository.findById(id).orElse(null);
@@ -163,7 +145,7 @@ public class MiembroService {
                 inscripcion.setFechaBaja(LocalDate.now());
                 inscripcionRepository.save(inscripcion);
                 if (inscripcionRepository.countByMiembroIdAndFechaBajaIsNull(miembroId) == 0) {
-                    HistorialAltasBajas baja = new HistorialAltasBajas();
+                    HistorialAltas baja = new HistorialAltas();
                     baja.setFechaBaja(LocalDate.now());
                     baja.setMiembro(miembro);
                     historialRepository.save(baja);
@@ -172,4 +154,44 @@ public class MiembroService {
         }
         return miembro;
     }
+
+    public Miembro darDeBajaInscripcion(Long miembroId, Long inscripcionId, LocalDate fechaBaja) {
+        Inscripcion inscripcion = inscripcionRepository.findById(inscripcionId).orElse(null);
+        if (inscripcion != null && inscripcion.getMiembro().getId().equals(miembroId)) {
+            inscripcion.setFechaBaja(fechaBaja);
+            inscripcionRepository.save(inscripcion);
+            return miembroRepository.findById(miembroId).orElse(null);
+        }
+        return null;
+    }
+
+    public boolean darDeBajaMiembro(Long miembroId, LocalDate fechaBaja) {
+        // Obtener el miembro por ID
+        Miembro miembro = miembroRepository.findById(miembroId).orElse(null);
+        if (miembro != null) {
+            // 1. Actualizar la fecha de baja del miembro
+            miembro.setFechaBaja(fechaBaja);
+            miembroRepository.save(miembro);
+
+            // 2. Registrar la fecha de baja en el historial de altas
+            HistorialAltas historialAlta = new HistorialAltas();
+            historialAlta.setMiembro(miembro);
+            historialAlta.setFechaBaja(fechaBaja); // Suponiendo que este campo existe
+            historialRepository.save(historialAlta);
+
+            // 3. Actualizar la fecha de baja en las inscripciones activas
+            List<Inscripcion> inscripciones = inscripcionRepository.findByMiembroId(miembroId);
+            for (Inscripcion inscripcion : inscripciones) {
+                // Si la inscripción está activa (por ejemplo, si no tiene fecha de baja aún)
+                if (inscripcion.getFechaBaja() == null) {
+                    inscripcion.setFechaBaja(fechaBaja);
+                    inscripcionRepository.save(inscripcion);
+                }
+            }
+
+            return true;
+        }
+        return false;
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.gym.gym.management;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.gym.gym.management.dto.ActividadDTO;
@@ -15,14 +16,12 @@ public class ActividadController {
     @Autowired
     private ActividadService actividadService;
     
-
     // Método para obtener todas las actividades, ahora devolviendo el DTO
     @GetMapping
     public List<ActividadDTO> obtenerActividades() {
         List<Actividad> actividades = actividadService.obtenerTodasLasActividades();
-        // Convertimos cada actividad a un DTO y lo devolvemos
         return actividades.stream()
-                .map(ActividadDTO::new)  // Convertimos la entidad a DTO
+                .map(ActividadDTO::new)
                 .collect(Collectors.toList());
     }
 
@@ -30,7 +29,7 @@ public class ActividadController {
     @GetMapping("/{id}")
     public ActividadDTO obtenerActividad(@PathVariable Long id) {
         Actividad actividad = actividadService.obtenerActividadPorId(id);
-        return new ActividadDTO(actividad);  // Retornamos el DTO
+        return new ActividadDTO(actividad);
     }
 
     // Método para guardar una nueva actividad
@@ -52,18 +51,26 @@ public class ActividadController {
     }
     
     @PutMapping("/{id}")
-    public Actividad actualizarActividad(@PathVariable Long id, @RequestBody Actividad actividad) {
+    public ResponseEntity<Actividad> actualizarActividad(@PathVariable Long id, @RequestBody Actividad actividad) {
         Actividad actividadExistente = actividadService.obtenerActividadPorId(id);
         if (actividadExistente != null) {
-      
             actividadExistente.setNombre(actividad.getNombre());
             actividadExistente.setCosto(actividad.getCosto());
             actividadExistente.setCupo(actividad.getCupo());
-            
-            return actividadService.guardarActividad(actividadExistente);
+            return ResponseEntity.ok(actividadService.guardarActividad(actividadExistente));
         }
-        return null; 
+        return ResponseEntity.notFound().build();
     }
-    
+
+
+    // Método para obtener actividades disponibles
+    @GetMapping("/disponibles")
+    public List<ActividadDTO> getActividadesDisponibles() {
+        List<Actividad> actividades = actividadService.getActividadesDisponibles();
+        return actividades.stream()
+                .map(ActividadDTO::new)
+                .collect(Collectors.toList());
+    }
+
 
 }

@@ -17,6 +17,7 @@ public class Actividad {
     private String descripcion;
     private double costo;
     private int cupo;
+    private boolean disponible; 
     
     @OneToMany(mappedBy = "actividad", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Horario> horarios = new ArrayList<>();
@@ -25,7 +26,7 @@ public class Actividad {
     @JsonManagedReference("actividad-inscripcion")
     private List<Inscripcion> inscripciones = new ArrayList<>();
 
-	private int cupoUsado;
+    private int cupoUsado;
 
     public boolean tieneCupoDisponible() {
         return inscripciones.size() < cupo;
@@ -92,6 +93,14 @@ public class Actividad {
         this.cupo = cupo;
     }
 
+    public boolean isDisponible() {
+        return disponible;
+    }
+
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
+    }
+
     public List<Horario> getHorarios() {
         return horarios;
     }
@@ -108,11 +117,11 @@ public class Actividad {
         this.inscripciones = inscripciones;
     }
 
-	public int getCupoUsado() {
-		return cupoUsado;
-	}
+    public int getCupoUsado() {
+        return cupoUsado;
+    }
 
-	public void setCupoUsado(int cupoUsado) {
-		this.cupoUsado = cupoUsado;
-	}
+    public void setCupoUsado(int cupoUsado) {
+        this.cupoUsado = cupoUsado;
+    }
 }

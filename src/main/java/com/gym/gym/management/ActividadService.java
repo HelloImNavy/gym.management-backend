@@ -32,4 +32,8 @@ public class ActividadService {
         return actividad != null && actividad.tieneCupoDisponible();
     }
 
+    public List<Actividad> getActividadesDisponibles() {
+        // Obtener todas las actividades donde el cupoUsado es menor o igual al cupo
+        return actividadRepository.findByCupoUsadoLessThanCupo();
+    }
 }

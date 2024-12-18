@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 
 import com.gym.gym.management.dto.CobroDTO;
 
-
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/cobros")
@@ -19,6 +18,17 @@ public class CobroController {
 
     @Autowired
     private CobroRepository cobroRepository;
+
+    @GetMapping("/miembro/{miembroId}")
+    public ResponseEntity<List<CobroDTO>> getCobrosPorMiembro(@PathVariable Long miembroId) {
+        try {
+            List<CobroDTO> cobros = cobroService.buscarCobrosPorMiembro(miembroId);
+            return ResponseEntity.ok(cobros);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
 
     @GetMapping("/miembro")
     public ResponseEntity<List<Cobro>> buscarCobrosPorMiembro(
@@ -72,7 +82,15 @@ public class CobroController {
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoCobro);
     }
     
-    @GetMapping public ResponseEntity<List<CobroDTO>> obtenerTodosLosCobros() { 
-        List<CobroDTO> cobros = cobroService.obtenerTodosLosCobros(); return ResponseEntity.ok(cobros); 
+    @GetMapping
+    public ResponseEntity<List<CobroDTO>> obtenerTodosLosCobros() { 
+        List<CobroDTO> cobros = cobroService.obtenerTodosLosCobros(); 
+        return ResponseEntity.ok(cobros); 
+    }
+    
+    @GetMapping("/todosPagados/{miembroId}")
+    public ResponseEntity<Boolean> verificarTodosPagados(@PathVariable Long miembroId) {
+        boolean todosPagados = cobroService.verificarTodosPagados(miembroId);
+        return ResponseEntity.ok(todosPagados);
     }
 }
