@@ -8,14 +8,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.gym.gym.management.dto.InscripcionDTO;
+
 public interface InscripcionRepository extends JpaRepository<Inscripcion, Long> {
 
 	// Buscar inscripciones por miembro
 	Inscripcion findByMiembro(Miembro miembro);
-
-	// Buscar inscripciones por ID de miembro
-
-    //	List<Inscripcion> findByMiembroId(Long idMiembro);
 
 	// Método para obtener inscripciones solo por actividadId con paginación
 	Page<Inscripcion> findByActividadId(Long actividadId, Pageable pageable);
@@ -31,7 +29,17 @@ public interface InscripcionRepository extends JpaRepository<Inscripcion, Long> 
 	List<Inscripcion> findByMiembroId(Long miembroId);
 	    long countByMiembroIdAndFechaBajaIsNull(Long miembroId);
 	    Inscripcion findByMiembroIdAndActividadId(Long miembroId, Long actividadId);
-	}
+	    
+	 
+	List<Inscripcion> findByMiembroIdAndFechaBajaIsNull(Long miembroId);	   
+	
+	@Query("SELECT new com.gym.gym.management.dto.InscripcionDTO(i.miembro.id, i.miembro.nombre, i.miembro.apellidos, a.id, a.nombre, i.fechaAlta, i.fechaBaja) " +
+		       "FROM Inscripcion i JOIN i.actividad a " +
+		       "WHERE i.miembro.id = :idMiembro")
+		List<InscripcionDTO> findInscripcionesConNombreActividad(@Param("idMiembro") Long idMiembro);
+
+}
+
 
 
 

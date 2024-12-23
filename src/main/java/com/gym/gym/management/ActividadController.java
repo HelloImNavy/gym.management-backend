@@ -71,6 +71,18 @@ public class ActividadController {
                 .map(ActividadDTO::new)
                 .collect(Collectors.toList());
     }
+    
 
+    // Nuevo método para obtener solo el nombre de una actividad por su ID
+    @GetMapping("/{id}/nombre")
+    public ResponseEntity<String> obtenerNombreActividad(@PathVariable Long id) {
+        Actividad actividad = actividadService.obtenerActividadPorId(id);
+        if (actividad != null) {
+            return ResponseEntity.ok(actividad.getNombre());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
 
 }

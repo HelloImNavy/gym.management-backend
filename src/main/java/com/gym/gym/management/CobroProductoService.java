@@ -15,8 +15,16 @@ public class CobroProductoService {
     }
 
     public CobroProducto saveCobro(CobroProducto cobroProducto) {
-        return cobroProductoRepository.save(cobroProducto);
+        if (cobroProducto.getSocioId() != null) {
+            // Si hay un socioId, se guarda normalmente
+            return cobroProductoRepository.save(cobroProducto);
+        } else {
+            // Si no hay socioId, asignamos un nombre de comprador manual
+            cobroProducto.setNombreComprador(cobroProducto.getNombreComprador()); 
+            return cobroProductoRepository.save(cobroProducto);
+        }
     }
+
 
     public void deleteCobro(Long id) {
         cobroProductoRepository.deleteById(id);

@@ -4,6 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +28,10 @@ public class MiembroService {
 
     @Autowired
     private InscripcionRepository inscripcionRepository;
+    
+    @Autowired
+    private InscripcionService inscripcionService;
+
 
     @Autowired
     private CobroRepository cobroRepository;
@@ -40,9 +47,20 @@ public class MiembroService {
         return miembroRepository.findById(id).orElse(null);
     }
 
+    @Transactional
     public Miembro guardarMiembro(Miembro miembro) {
+        // Guardar el miembro en la base de datos
         Miembro nuevoMiembro = miembroRepository.save(miembro);
-        logger.debug("Nuevo miembro guardado: " + nuevoMiembro.getId());
+
+        // Procesar inscripciones
+        if (miembro.getInscripciones() != null) {
+            for (Inscripcion inscripcion : miembro.getInscripciones()) {
+                Actividad actividad = actividadRepository.findById(inscripcion.getActividad().getId())
+                        .orElseThrow(() -> new IllegalArgumentException("Actividad no encontrada: " + inscripcion.getActividad().getId()));
+                
+                inscripcionService.procesarInscripcion(nuevoMiembro, actividad, inscripcion.getFechaAlta());
+            }
+        }
 
         // Crear registro en el historial de altas
         HistorialAltas alta = new HistorialAltas();
@@ -51,30 +69,12 @@ public class MiembroService {
         historialRepository.save(alta);
         logger.debug("Historial de alta creado para el miembro: " + nuevoMiembro.getId());
 
-        // Guardar las inscripciones
-        miembro.getInscripciones().forEach(inscripcion -> {
-            Long actividadId = inscripcion.getActividad().getId();
-            Actividad actividad = actividadRepository.findById(actividadId)
-                .orElseThrow(() -> new IllegalArgumentException("Actividad no encontrada con ID: " + actividadId));
-
-            if (!actividad.tieneCupoDisponible()) {
-                throw new IllegalStateException("La actividad '" + actividad.getNombre() + "' no tiene cupo disponible.");
-            }
-
-            actividad.incrementarCupoUsado();
-            inscripcion.setActividad(actividad);
-            inscripcion.setMiembro(nuevoMiembro);
-
-            actividadRepository.save(actividad);
-            inscripcionRepository.save(inscripcion);
-            logger.debug("Inscripción guardada: " + inscripcion.getId());
-        });
-
         // Crear cobros iniciales basados en las inscripciones
         crearCobrosIniciales(nuevoMiembro);
 
         return nuevoMiembro;
     }
+
 
     private void crearCobrosIniciales(Miembro miembro) {
         miembro.getInscripciones().forEach(inscripcion -> {
@@ -108,7 +108,6 @@ public class MiembroService {
     }
 
 
-
     public Miembro actualizarMiembro(Long id, Miembro miembroActualizado) {
         Miembro miembro = miembroRepository.findById(id).orElse(null);
         if (miembro != null) {
@@ -137,61 +136,78 @@ public class MiembroService {
         return new PageImpl<>(miembros, pageable, inscripciones.getTotalElements());
     }
 
-    public Miembro darDeBajaActividad(Long miembroId, Long actividadId) {
-        Miembro miembro = miembroRepository.findById(miembroId).orElse(null);
-        if (miembro != null) {
-            Inscripcion inscripcion = inscripcionRepository.findByMiembroIdAndActividadId(miembroId, actividadId);
-            if (inscripcion != null) {
-                inscripcion.setFechaBaja(LocalDate.now());
-                inscripcionRepository.save(inscripcion);
-                if (inscripcionRepository.countByMiembroIdAndFechaBajaIsNull(miembroId) == 0) {
-                    HistorialAltas baja = new HistorialAltas();
-                    baja.setFechaBaja(LocalDate.now());
-                    baja.setMiembro(miembro);
-                    historialRepository.save(baja);
-                }
-            }
-        }
-        return miembro;
-    }
-
     public Miembro darDeBajaInscripcion(Long miembroId, Long inscripcionId, LocalDate fechaBaja) {
         Inscripcion inscripcion = inscripcionRepository.findById(inscripcionId).orElse(null);
         if (inscripcion != null && inscripcion.getMiembro().getId().equals(miembroId)) {
+            // Dar de baja la inscripción
             inscripcion.setFechaBaja(fechaBaja);
             inscripcionRepository.save(inscripcion);
+
+            // Actualizar el cupo de la actividad
+            Actividad actividad = inscripcion.getActividad();
+            if (actividad != null) {
+                actividad.setCupo(actividad.getCupo() + 1);  
+                actividadRepository.save(actividad);
+            }
+
             return miembroRepository.findById(miembroId).orElse(null);
         }
         return null;
     }
 
-    public boolean darDeBajaMiembro(Long miembroId, LocalDate fechaBaja) {
-        // Obtener el miembro por ID
-        Miembro miembro = miembroRepository.findById(miembroId).orElse(null);
-        if (miembro != null) {
-            // 1. Actualizar la fecha de baja del miembro
-            miembro.setFechaBaja(fechaBaja);
-            miembroRepository.save(miembro);
 
-            // 2. Registrar la fecha de baja en el historial de altas
-            HistorialAltas historialAlta = new HistorialAltas();
-            historialAlta.setMiembro(miembro);
-            historialAlta.setFechaBaja(fechaBaja); // Suponiendo que este campo existe
-            historialRepository.save(historialAlta);
+    public void darDeBajaMiembro(Long miembroId, LocalDate fechaBaja) {
+        Miembro miembro = miembroRepository.findById(miembroId)
+            .orElseThrow(() -> new IllegalArgumentException("Miembro no encontrado"));
 
-            // 3. Actualizar la fecha de baja en las inscripciones activas
-            List<Inscripcion> inscripciones = inscripcionRepository.findByMiembroId(miembroId);
-            for (Inscripcion inscripcion : inscripciones) {
-                // Si la inscripción está activa (por ejemplo, si no tiene fecha de baja aún)
-                if (inscripcion.getFechaBaja() == null) {
-                    inscripcion.setFechaBaja(fechaBaja);
-                    inscripcionRepository.save(inscripcion);
-                }
+        if (miembro.getFechaBaja() != null) {
+            throw new IllegalArgumentException("El miembro ya está dado de baja");
+        }
+
+        // Dar de baja todas las inscripciones activas
+        List<Inscripcion> inscripcionesActivas = inscripcionRepository.findByMiembroIdAndFechaBajaIsNull(miembroId);
+        for (Inscripcion inscripcion : inscripcionesActivas) {
+            inscripcion.setFechaBaja(fechaBaja);
+
+            // Actualizar el cupo de la actividad
+            Actividad actividad = inscripcion.getActividad();
+            if (actividad != null) {
+                actividad.setCupo(actividad.getCupo() + 1);
+                actividadRepository.save(actividad);
             }
 
-            return true;
+            inscripcionRepository.save(inscripcion);
         }
-        return false;
+
+        // Actualizar el estado del miembro
+        miembro.setFechaBaja(fechaBaja);
+        miembroRepository.save(miembro);
+
+        // Registrar en el historial
+        HistorialAltas historial = new HistorialAltas();
+        historial.setFechaBaja(fechaBaja);
+        historial.setMiembro(miembro);
+        historialRepository.save(historial);
+    }
+    
+    public void darDeAlta(Long miembroId, LocalDate fechaAlta) {
+        Miembro miembro = miembroRepository.findById(miembroId)
+            .orElseThrow(() -> new IllegalArgumentException("Miembro no encontrado"));
+
+        if (miembro.getFechaBaja() == null) {
+            throw new IllegalArgumentException("El miembro ya está dado de alta");
+        }
+
+        // Actualizar el estado del miembro
+        miembro.setFechaBaja(null);
+        miembro.setFechaAlta(java.sql.Date.valueOf(fechaAlta));
+        miembroRepository.save(miembro);
+
+        // Registrar en el historial
+        HistorialAltas historial = new HistorialAltas();
+        historial.setFechaAlta(fechaAlta);
+        historial.setMiembro(miembro);
+        historialRepository.save(historial);
     }
 
 }

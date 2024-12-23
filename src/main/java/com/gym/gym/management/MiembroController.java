@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,14 +29,46 @@ public class MiembroController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Miembro> obtenerMiembro(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> obtenerMiembro(@PathVariable Long id) {
         Miembro miembro = miembroService.obtenerMiembroPorId(id);
-        if (miembro != null) {
-            return ResponseEntity.ok(miembro);
-        } else {
-            return ResponseEntity.notFound().build();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", miembro.getId());
+        response.put("nombre", miembro.getNombre());
+        response.put("apellidos", miembro.getApellidos());
+        response.put("direccion", miembro.getDireccion());
+        response.put("telefono", miembro.getTelefono());
+        response.put("fechaNacimiento", miembro.getFechaNacimiento());
+        response.put("fechaAlta", miembro.getFechaAlta());
+        response.put("fechaBaja", miembro.getFechaBaja());
+        response.put("observaciones", miembro.getObservaciones());
+
+        // Agregar inscripciones con detalles completos de la actividad
+        List<Map<String, Object>> inscripciones = new ArrayList<>();
+        for (Inscripcion inscripcion : miembro.getInscripciones()) {
+            Map<String, Object> inscripcionMap = new HashMap<>();
+            inscripcionMap.put("id", inscripcion.getId());
+            inscripcionMap.put("fechaAlta", inscripcion.getFechaAlta());
+            inscripcionMap.put("fechaBaja", inscripcion.getFechaBaja());
+            inscripcionMap.put("activo", inscripcion.isActivo());
+
+            // Detalles completos de la actividad
+            Map<String, Object> actividadMap = new HashMap<>();
+            actividadMap.put("id", inscripcion.getActividad().getId());
+            actividadMap.put("nombre", inscripcion.getActividad().getNombre());
+            actividadMap.put("descripcion", inscripcion.getActividad().getDescripcion());
+            // Agrega otros detalles de la actividad si es necesario
+
+            inscripcionMap.put("actividad", actividadMap);  // Incluir los detalles de la actividad
+            inscripciones.add(inscripcionMap);
         }
+
+        response.put("inscripciones", inscripciones);
+
+        return ResponseEntity.ok(response);
     }
+
+
 
     @PutMapping("/actualizar/{id}")
     public ResponseEntity<Miembro> actualizarMiembro(@PathVariable Long id, @RequestBody Miembro miembro) {
@@ -52,15 +86,7 @@ public class MiembroController {
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoMiembro);
     }
 
-    /*@PutMapping("/{miembroId}/baja/{inscripcionId}")
-    public ResponseEntity<?> darDeBajaMiembro(@PathVariable Long miembroId, @PathVariable Long inscripcionId, @RequestParam LocalDate fechaBaja) {
-        Miembro miembro = miembroService.darDeBajaMiembro(miembroId, inscripcionId, fechaBaja);
-        if (miembro != null) {
-            return ResponseEntity.ok(miembro);
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No se pudo dar de baja la inscripción.");
-        }
-    }*/
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> eliminarMiembro(@PathVariable Long id) {
@@ -89,16 +115,18 @@ public class MiembroController {
 
         try {
             LocalDate fecha = LocalDate.parse(fechaBaja);
-            boolean exito = miembroService.darDeBajaMiembro(id, fecha);
-            if (exito) {
-                return ResponseEntity.ok("Miembro dado de baja correctamente");
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No se pudo dar de baja al miembro.");
-            }
+
+            // Llamar al método directamente sin capturar un boolean
+            miembroService.darDeBajaMiembro(id, fecha);
+
+            return ResponseEntity.ok("Miembro dado de baja correctamente");
         } catch (DateTimeParseException e) {
             return ResponseEntity.badRequest().body("Formato de fecha inválido. Se esperaba 'yyyy-MM-dd'.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
 
 
 }

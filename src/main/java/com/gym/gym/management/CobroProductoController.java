@@ -10,7 +10,7 @@ import java.util.List;
 public class CobroProductoController {
 	
     @Autowired
-    private CobroProductoService cobroProductoService;
+    private CobroProductoService cobroProductoService;	
 
     @GetMapping
     public List<CobroProducto> getAllCobros() {
