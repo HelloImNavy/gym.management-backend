@@ -2,8 +2,8 @@ package com.gym.gym.management.dto;
 
 import java.util.List;
 
-import com.gym.gym.management.Actividad;
-import com.gym.gym.management.Inscripcion;
+import com.gym.gym.management.entity.Actividad;
+import com.gym.gym.management.entity.Inscripcion;
 
 public class ActividadDTO {
     private Long id;

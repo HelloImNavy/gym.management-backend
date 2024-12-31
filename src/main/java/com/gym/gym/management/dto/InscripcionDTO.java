@@ -3,6 +3,7 @@ package com.gym.gym.management.dto;
 import java.time.LocalDate;
 
 public class InscripcionDTO {
+    private Long id;
     private Long idMiembro;
     private String nombreMiembro;
     private String apellidosMiembro;
@@ -12,7 +13,8 @@ public class InscripcionDTO {
     private LocalDate fechaBaja;
 
     // Constructor con todos los parámetros necesarios
-    public InscripcionDTO(Long idMiembro, String nombreMiembro, String apellidosMiembro, Long idActividad, String nombreActividad, LocalDate fechaAlta, LocalDate fechaBaja) {
+    public InscripcionDTO(Long id, Long idMiembro, String nombreMiembro, String apellidosMiembro, Long idActividad, String nombreActividad, LocalDate fechaAlta, LocalDate fechaBaja) {
+        this.id = id;
         this.idMiembro = idMiembro;
         this.nombreMiembro = nombreMiembro;
         this.apellidosMiembro = apellidosMiembro;
@@ -23,6 +25,16 @@ public class InscripcionDTO {
     }
 
     // Getters y Setters
+
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public Long getIdMiembro() {
         return idMiembro;
     }
