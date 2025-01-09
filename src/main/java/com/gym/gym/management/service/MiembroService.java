@@ -2,8 +2,6 @@ package com.gym.gym.management.service;
 
 import com.gym.gym.management.entity.*;
 import com.gym.gym.management.repository.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +17,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class MiembroService {
-
-    private static final Logger logger = LoggerFactory.getLogger(MiembroService.class);
 
     @Autowired
     private MiembroRepository miembroRepository;
@@ -69,8 +65,6 @@ public class MiembroService {
         alta.setFechaAlta(LocalDate.now());
         alta.setMiembro(nuevoMiembro);
         historialRepository.save(alta);
-        logger.debug("Historial de alta creado para el miembro: " + nuevoMiembro.getId());
-        // Crear cobros iniciales basados en las inscripciones
         crearCobrosIniciales(nuevoMiembro);
 
         return nuevoMiembro;
@@ -86,8 +80,7 @@ public class MiembroService {
             cobro.setMonto(inscripcion.getActividad().getCosto());
             cobro.setEstado("PENDIENTE");
             cobro.setConcepto("Cuota de Actividad: " + inscripcion.getActividad().getNombre());
-            Cobro cobroGuardado = cobroRepository.save(cobro);
-            logger.debug("Cobro guardado: " + cobroGuardado.getId() + ", para miembro: " + miembro.getId());
+            cobroRepository.save(cobro);
         });
     }
 
@@ -103,11 +96,6 @@ public class MiembroService {
 
         miembroRepository.deleteById(id);
     }
-
-    public List<Inscripcion> obtenerInscripcionesDeMiembro(Long miembroId) {
-        return inscripcionRepository.findByMiembroId(miembroId);
-    }
-
 
     public Miembro actualizarMiembro(Long id, Miembro miembroActualizado) {
         Miembro miembro = miembroRepository.findById(id).orElse(null);
@@ -137,26 +125,6 @@ public class MiembroService {
                 .collect(Collectors.toList());
         return new PageImpl<>(miembros, pageable, inscripciones.getTotalElements());
     }
-
-    public Miembro darDeBajaInscripcion(Long miembroId, Long inscripcionId, LocalDate fechaBaja) {
-        Inscripcion inscripcion = inscripcionRepository.findById(inscripcionId).orElse(null);
-        if (inscripcion != null && inscripcion.getMiembro().getId().equals(miembroId)) {
-            // Dar de baja la inscripción
-            inscripcion.setFechaBaja(fechaBaja);
-            inscripcionRepository.save(inscripcion);
-
-            // Actualizar el cupo de la actividad
-            Actividad actividad = inscripcion.getActividad();
-            if (actividad != null) {
-                actividad.setCupo(actividad.getCupo() + 1);  
-                actividadRepository.save(actividad);
-            }
-
-            return miembroRepository.findById(miembroId).orElse(null);
-        }
-        return null;
-    }
-
 
     public void darDeBajaMiembro(Long miembroId, LocalDate fechaBaja) {
         Miembro miembro = miembroRepository.findById(miembroId)
@@ -192,25 +160,4 @@ public class MiembroService {
         historial.setMiembro(miembro);
         historialRepository.save(historial);
     }
-    
-    public void darDeAlta(Long miembroId, LocalDate fechaAlta) {
-        Miembro miembro = miembroRepository.findById(miembroId)
-            .orElseThrow(() -> new IllegalArgumentException("Miembro no encontrado"));
-
-        if (miembro.getFechaBaja() == null) {
-            throw new IllegalArgumentException("El miembro ya está dado de alta");
-        }
-
-        // Actualizar el estado del miembro
-        miembro.setFechaBaja(null);
-        miembro.setFechaAlta(java.sql.Date.valueOf(fechaAlta));
-        miembroRepository.save(miembro);
-
-        // Registrar en el historial
-        HistorialAltas historial = new HistorialAltas();
-        historial.setFechaAlta(fechaAlta);
-        historial.setMiembro(miembro);
-        historialRepository.save(historial);
-    }
-
 }

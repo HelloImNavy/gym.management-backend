@@ -8,10 +8,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/productos")
-@CrossOrigin(origins = "http://localhost:4200")
+
 public class ProductoController {
 
     @Autowired
@@ -31,6 +32,29 @@ public class ProductoController {
     @PutMapping("/{id}")
     public ResponseEntity<Producto> actualizarProducto(@PathVariable Long id, @RequestBody Producto producto) {
         Producto productoActualizado = productoService.actualizarProducto(id, producto);
+        return new ResponseEntity<>(productoActualizado, HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}/restar-cantidad")
+    public ResponseEntity<Producto> restarCantidad(@PathVariable Long id, @RequestBody Map<String, Integer> request) {
+        int cantidadSolicitada = request.get("cantidad");
+        Producto producto = productoService.obtenerProductoPorId(id);
+
+        if (producto == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // Producto no encontrado
+        }
+
+        // Verificar si hay suficiente cantidad disponible
+        if (producto.getCantidad() < cantidadSolicitada) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // No hay suficiente cantidad
+        }
+
+        // Restar la cantidad solicitada
+        producto.setCantidad(producto.getCantidad() - cantidadSolicitada);
+
+        // Guardar el producto actualizado
+        Producto productoActualizado = productoService.actualizarProducto(id, producto);
+
         return new ResponseEntity<>(productoActualizado, HttpStatus.OK);
     }
 

@@ -42,4 +42,8 @@ public class ProductoService {
     public List<Producto> buscarPorCategoria(String categoria) {
         return productoRepository.findByCategoria(categoria);
     }
+
+    public Producto obtenerProductoPorId(Long id) {
+        return productoRepository.findById(id).orElse(null);
+    }
 }

@@ -7,9 +7,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static com.gym.gym.management.service.CobroService.EstadoCobro.PAGADO;
-import static com.gym.gym.management.service.CobroService.EstadoCobro.PENDIENTE;
-
 @Service
 public class CobroProductoService {
     @Autowired
@@ -26,14 +23,7 @@ public class CobroProductoService {
     }
 
     public CobroProducto saveCobro(CobroProducto cobroProducto) {
-        if (cobroProducto.getSocioId() != null) {
-            // Si hay un socioId, se guarda normalmente
-            return cobroProductoRepository.save(cobroProducto);
-        } else {
-            // Si no hay socioId, asignamos un nombre de comprador manual
-            cobroProducto.setNombreComprador(cobroProducto.getNombreComprador()); 
-            return cobroProductoRepository.save(cobroProducto);
-        }
+        return cobroProductoRepository.save(cobroProducto);
     }
 
 

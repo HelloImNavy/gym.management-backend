@@ -17,10 +17,7 @@ public class Actividad {
     private String descripcion;
     private double costo;
     private int cupo;
-    private boolean disponible; 
-    
-    @OneToMany(mappedBy = "actividad", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Horario> horarios = new ArrayList<>();
+    private boolean disponible;
     
     @OneToMany(mappedBy = "actividad", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("actividad-inscripcion")
@@ -99,14 +96,6 @@ public class Actividad {
 
     public void setDisponible(boolean disponible) {
         this.disponible = disponible;
-    }
-
-    public List<Horario> getHorarios() {
-        return horarios;
-    }
-
-    public void setHorarios(List<Horario> horarios) {
-        this.horarios = horarios;
     }
 
     public List<Inscripcion> getInscripciones() {

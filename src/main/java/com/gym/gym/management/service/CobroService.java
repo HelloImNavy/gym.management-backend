@@ -5,12 +5,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.gym.gym.management.entity.Cobro;
-import com.gym.gym.management.entity.CobroProducto;
 import com.gym.gym.management.entity.Inscripcion;
 import com.gym.gym.management.entity.Miembro;
 import com.gym.gym.management.repository.CobroRepository;
 import com.gym.gym.management.repository.InscripcionRepository;
 import com.gym.gym.management.repository.MiembroRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -89,6 +89,7 @@ public class CobroService {
     }
 
     @Scheduled(cron = "0 0 0 1 * ?")
+    @Transactional
     public void generarCobrosMensuales() {
         List<Miembro> miembros = miembroRepository.findAll();
         for (Miembro miembro : miembros) {
@@ -99,24 +100,13 @@ public class CobroService {
                     cobro.setFecha(LocalDate.now());
                     cobro.setMonto(inscripcion.getActividad().getCosto());
                     cobro.setEstado("PENDIENTE");
+                    cobro.setConcepto("Cuota de actividad: " + inscripcion.getActividad().getNombre());
+                    cobro.setInscripcion(inscripcion);
 
                     cobroRepository.save(cobro);
                 }
             }
         }
-    }
-
-    public Cobro registrarCobroManual(Long inscripcionId, String concepto, Double monto) {
-        Inscripcion inscripcion = inscripcionRepository.findById(inscripcionId)
-                .orElseThrow(() -> new RuntimeException("Inscripción no encontrada"));
-
-        Cobro cobro = new Cobro();
-        cobro.setInscripcion(inscripcion);  
-        cobro.setConcepto(concepto);
-        cobro.setMonto(monto);
-        cobro.setFecha(LocalDate.now());
-        cobro.setEstado("PENDIENTE");
-        return cobroRepository.save(cobro);
     }
 
     public List<CobroDTO> obtenerTodosLosCobros() {

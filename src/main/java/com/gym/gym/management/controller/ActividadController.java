@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/actividades")
-@CrossOrigin(origins = "http://localhost:4200")
 public class ActividadController {
 
     @Autowired

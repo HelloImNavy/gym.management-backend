@@ -16,7 +16,6 @@ import com.gym.gym.management.dto.CobroDTO;
 
 @RestController
 @RequestMapping("/cobros")
-@CrossOrigin(origins = "http://localhost:4200")
 public class CobroController {
 
     @Autowired
@@ -111,4 +110,11 @@ public class CobroController {
         boolean todosPagados = cobroService.verificarTodosPagados(miembroId);
         return ResponseEntity.ok(todosPagados);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteCobro(@PathVariable Long id) {
+        cobroRepository.deleteById(id);
+        return ResponseEntity.ok("Deleted");
+    }
+
 }

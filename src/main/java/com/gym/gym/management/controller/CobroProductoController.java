@@ -9,9 +9,9 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/productos/pagos")
-@CrossOrigin(origins = "http://localhost:4200")
+
 public class CobroProductoController {
-	
+
     @Autowired
     private CobroProductoService cobroProductoService;
 

@@ -71,23 +71,22 @@ public class InscripcionService {
         }
     }
 
-    public Inscripcion darDeBaja(Long inscripcionId, LocalDate fechaBaja) {
-        return inscripcionRepository.findById(inscripcionId).map(inscripcion -> {
+    public void darDeBaja(Long inscripcionId, LocalDate fechaBaja) {
+        inscripcionRepository.findById(inscripcionId).map(inscripcion -> {
             if (inscripcion.getFechaBaja() != null) {
                 throw new IllegalArgumentException("La inscripción ya está dada de baja");
             }
-            // Validar fecha de baja 
+
             if (fechaBaja.isAfter(LocalDate.now())) {
                 throw new IllegalArgumentException("La fecha de baja no puede ser futura");
             }
 
-            // Asignar fecha de baja
             inscripcion.setFechaBaja(fechaBaja);
 
             // Actualizar el cupo de la actividad
             Actividad actividad = inscripcion.getActividad();
             if (actividad != null) {
-            	actividad.setCupoUsado(actividad.getCupoUsado() - 1);
+                actividad.setCupoUsado(actividad.getCupoUsado() - 1);
                 actividadRepository.save(actividad);
             }
 

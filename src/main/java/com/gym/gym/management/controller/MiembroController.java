@@ -19,13 +19,10 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/miembros")
-@CrossOrigin(origins = "http://localhost:4200")
 public class MiembroController {
 
     @Autowired
     private MiembroService miembroService;
-    
-    
 
     @GetMapping
     public List<Miembro> obtenerMiembros() {
