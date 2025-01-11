@@ -19,10 +19,9 @@ public class Inscripcion {
     private Miembro miembro;
 
     @ManyToOne
-    @JoinColumn(name = "actividad_id", nullable = false)
+    @JoinColumn(name = "actividad_id", nullable = true, foreignKey = @ForeignKey(name = "fk_inscripcion_actividad"))
     @JsonBackReference("actividad-inscripcion")
     private Actividad actividad;
-
 
     private LocalDate fechaAlta;
 
